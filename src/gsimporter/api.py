@@ -179,13 +179,16 @@ class Target(_UploadBase):
     )
 
     def _bind_json(self, json):
-        self.href = json.get('href')
+        if json.has_key('href'):
+            self.href = json.get('href')
         store_type = [ k for k in Target._store_types  if k in json]
-        if len(store_type) != 1:
-            self.binding_failed('invalid store entry: %s', json.keys())
-        self.store_type = store_type[0]
-        repr = json[self.store_type]
-        super(Target, self)._bind_json(repr)
+        if store_type:
+            if len(store_type) != 1:
+                self.binding_failed('invalid store entry: %s', json.keys())
+            else:
+                self.store_type = store_type[0]
+                repr = json[self.store_type]
+                super(Target, self)._bind_json(repr)
 
     def _bind_custom_json(self, json):
         workspace = json.get('workspace', None)
@@ -425,5 +428,3 @@ class Session(_UploadBase):
         resp, content = self._client().delete(url)
         if resp['status'] != '204':
             raise Exception('expected 204 response code, got %s' % resp['status'],content)
-    
-

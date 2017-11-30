@@ -2,12 +2,12 @@
 
 from setuptools import setup, find_packages
 
-setup(name = "gsimporter",
-    version = "1.0.0",
-    description = "GeoServer Importer Client",
-    keywords = "GeoServer Importer",
+setup(name = "gn_gsimporter",
+    version = "1.0.1",
+    description = "GeoNode GeoServer Importer Client",
+    keywords = "GeoNode GeoServer Importer",
     license = "MIT",
-    url = "https://github.com/boundlessgeo/gsimporter",
+    url = "https://github.com/GeoNode/gsimporter",
     author = "Ian Schneider",
     author_email = "ischneider@opengeo.org",
     install_requires = [
@@ -24,4 +24,3 @@ setup(name = "gsimporter",
     packages = find_packages('src'),
     test_suite = 'test.uploadtests'
 )
-
