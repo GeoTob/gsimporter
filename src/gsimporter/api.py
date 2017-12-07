@@ -244,10 +244,6 @@ class Layer(_UploadBase):
         data = { 'layer' : { 'name' : name }}
         self._client().put_json(self.href, json.dumps(data))
 
-    def set_srs(self, srs):
-        data = { 'layer' : { 'srs' : srs }}
-        self._client().put_json(self.href, json.dumps(data))
-
 
 class Task(_UploadBase):
     _object_name = 'task'
@@ -265,6 +261,7 @@ class Task(_UploadBase):
     )
 
     def _bind_custom_json(self, json):
+        self.error_message = json.get('errorMessage', None)
         self.transform_type = json['transformChain']['type']
         self.transforms = json['transformChain']['transforms']
 
@@ -300,6 +297,10 @@ class Task(_UploadBase):
             }
         }}
         self._client().put_json(self.href,json.dumps(data))
+
+    def set_srs(self, srs):
+        data = { 'layer' : { 'srs' : srs }}
+        self._client().put_json(self.href, json.dumps(data))
 
     def delete(self):
         """Delete the task"""
