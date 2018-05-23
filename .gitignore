@@ -1,5 +1,6 @@
 doc/build
 build
+dist
 *.egg*
 *.pyc
-dist
+*.bak

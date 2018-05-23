@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 setup(name = "gn_gsimporter",
-    version = "1.0.2",
+    version = "1.0.3",
     description = "GeoNode GeoServer Importer Client",
     keywords = "GeoNode GeoServer Importer",
     license = "MIT",
@@ -20,7 +20,9 @@ setup(name = "gn_gsimporter",
         'OWSLib>=0.7.2',
         'unittest2',
     ],
-    package_dir = {'':'src'},
-    packages = find_packages('src'),
+    packages=find_packages(),
+    include_package_data = True,
+    zip_safe = False,
+    classifiers  = [],
     test_suite = 'test.uploadtests'
 )

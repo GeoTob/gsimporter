@@ -17,9 +17,9 @@ _logger = logging.getLogger(__name__)
 class Client(object):
 
     def __init__(self, url, username=None, password=None):
-        username = username or 'admin'
-        password = password or 'geoserver'
-        self.client = _Client(url,username,password)
+        self.username = username or 'admin'
+        self.password = password or 'geoserver'
+        self.client = _Client(url, username, password)
 
     def _call(self, fun, *args):
         # call the provided function and set the _uploader field on each
@@ -38,7 +38,7 @@ class Client(object):
         :return a list of Session objects
         '''
         return self._call(self.client.get_imports)
-        
+
     def get_session(self,id):
         '''Get an existing 'expanded' session by id.
         :param id: the integer id of the session to get
@@ -57,7 +57,7 @@ class Client(object):
         session = self._call(self.client.start_import, import_id, mosaic, name, target_store)
         if import_id: assert session.id >= import_id
         return session
-        
+
     def upload(self, fpath, use_url=False, import_id=None, mosaic=False,
                initial_opts=None):
         """Try a complete import - create a session and upload the provided file.
@@ -77,7 +77,7 @@ class Client(object):
         return self.upload_files(files, use_url, import_id, mosaic, initial_opts)
 
     def upload_files(self, files, use_url=False, import_id=None, mosaic=False,
-                     intial_opts=None, target_store=None):
+                     name=None, intial_opts=None, target_store=None):
         """Upload the provided files. If a mosaic, compute a name from the
         provided files.
         :param files: the files to upload
@@ -87,20 +87,20 @@ class Client(object):
         :param initial_opts: default None, dict of initial import options
         :returns: a gsimporter.api.Session object
         """
-        name = None
-        if mosaic:
+        if mosaic and not name:
             # @hack - ensure that target layer gets a nice name
             layername = os.path.basename(files[0])
             name, _ = os.path.splitext(layername)
-        if target_store:
-            name = os.path.abspath(files[0])
+        if target_store and not name:
+            name = os.path.basename(files[0])
 
         session = self.start_import(import_id, mosaic=mosaic, name=name, target_store=target_store)
-        session.upload_task(files, use_url, intial_opts)
-        
+        if files:
+            session.upload_task(files, use_url, intial_opts)
+
         return session
 
-        
+
     # pickle protocol - client object cannot be serialized
     # this allows api objects to be seamlessly pickled and loaded without restarting
     # the connection more explicitly but this will have consequences if other state is stored
@@ -110,8 +110,8 @@ class Client(object):
         return {'url':cl.service_url,'username':cl.username,'password':cl.password}
     def __setstate__(self,state):
         self.client = _Client(state['url'],state['username'],state['password'])
-        
-        
+
+
 class _Client(object):
     """Lower level http client"""
 
@@ -134,28 +134,28 @@ class _Client(object):
                 None,
                 self.http
             ))
-            
+
     def url(self,path):
         return "%s/%s" % (self.service_url,path)
 
     def post(self, url):
         return self._request(url, "POST")
-    
+
     def delete(self, url):
         return self._request(url, "DELETE")
-        
+
     def put_json(self, url, data):
         return self._request(url, "PUT", data, {
             "Content-type" : "application/json"
         })
-        
+
     def _parse_errors(self, content):
         try:
             resp = json.loads(content)
         except ValueError:
             return [content]
         return resp['errors']
-    
+
     def _request(self, url, method="GET", data=None, headers={}):
         log_data = None
         if data:
@@ -174,7 +174,7 @@ class _Client(object):
                 raise BadRequest(*self._parse_errors(content))
             raise RequestFailed(resp.status,content)
         return resp, content
-    
+
     def post_upload_url(self, url, upload_url):
         data = urlencode({
             'url' : upload_url
@@ -183,26 +183,27 @@ class _Client(object):
             # importer very picky
             'Content-type' : "application/x-www-form-urlencoded"
         })
-        
+
     def put_zip(self,url,payload):
         message = open(payload)
         with message:
             return self._request(url,"PUT",message,{
                 "Content-type": "application/zip",
             })
-            
+
     def get_import(self,i):
         return parse_response(self._request(self.url("imports/%s?expand=3" % i)))
 
     def get_imports(self):
         return parse_response(self._request(self.url("imports")))
-    
+
     def start_import(self, import_id=None, mosaic=False, name=None, target_store=False):
         method = 'POST'
         data = None
         headers = {}
+        import_data = {}
         if mosaic:
-            data = json.dumps({"import": {
+            import_data = {"import": {
                 "data": {
                    "type": "mosaic",
                    "name": name,
@@ -210,10 +211,9 @@ class _Client(object):
                         "mode": "auto"
                    }
                 }
-            }})
-            headers["Content-type"] = "application/json"
+            }}
         if target_store:
-            data = json.dumps({"import": {
+            import_data = {"import": {
                 "data": {
                     "type": "file",
                     "file": name
@@ -223,21 +223,22 @@ class _Client(object):
                         "name": target_store
                    }
                 }
-            }})
-            headers["Content-type"] = "application/json"
+            }}
+        data = json.dumps(import_data)
+        headers["Content-type"] = "application/json"
         if import_id is not None:
             url = self.url("imports/%s" % import_id)
             method = 'PUT'
         else:
             url = self.url("imports")
         return parse_response(self._request(url, method, data, headers))
-        
+
     def post_multipart(self,url,files,fields=[]):
         """
         fields is a sequence of (name, value) elements for regular form fields.
-        files is a sequence of name or (name,filename) or (name, filename, value) 
+        files is a sequence of name or (name,filename) or (name, filename, value)
         elements for data to be uploaded as files
-        
+
         """
         BOUNDARY = '----------ThIs_Is_tHe_bouNdaRY_$'
         CRLF = '\r\n'
@@ -271,8 +272,8 @@ class _Client(object):
                 'Content-Type' : 'multipart/form-data; boundary=%s' % BOUNDARY
             }
         )
-        
-        
+
+
 def _get_content_type(filename):
     return mimetypes.guess_type(filename)[0] or 'application/octet-stream'
 
@@ -281,7 +282,7 @@ def _debug(resp, content):
         _logger.debug("response : %s",pprint.pformat(resp))
         if "content-type" in resp and resp['content-type'] == 'application/json':
             try:
-                content = json.loads(content) 
+                content = json.loads(content)
                 content = json.dumps(content,indent=2)
             except ValueError:
                 pass
