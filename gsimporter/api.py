@@ -305,8 +305,8 @@ class Task(_UploadBase):
     def delete(self):
         """Delete the task"""
         resp, content = self._client().delete(self.href)
-        if resp['status'] != '204':
-            raise Exception('expected 204 response code, got %s' % resp['status'],content)
+        if resp.status != 204:
+            raise Exception('expected 204 response code, got %s' % resp.status,content)
 
     def set_transforms(self, transforms, save=True):
         """Set the transforms of this Item. transforms is a list of dicts"""
@@ -420,12 +420,12 @@ class Session(_UploadBase):
         if async:
             url = url + "?async=true&exec=true"
         resp, content = self._client().post(url)
-        if resp['status'] != '204':
-            raise Exception("expected 204 response code, got %s" % resp['status'],content)
+        if resp.status != 204:
+            raise Exception("expected 204 response code, got %s" % resp.status,content)
 
     def delete(self):
         """Delete this import session"""
         url = self._url("imports/%s",self.id)
         resp, content = self._client().delete(url)
-        if resp['status'] != '204':
-            raise Exception('expected 204 response code, got %s' % resp['status'],content)
+        if resp.status != 204:
+            raise Exception('expected 204 response code, got %s' % resp.status,content)

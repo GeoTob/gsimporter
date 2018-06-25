@@ -1,16 +1,20 @@
-import httplib2
-import logging
-from gsimporter.api import parse_response
-from gsimporter.api import RequestFailed
-from gsimporter.api import BadRequest
-from gsimporter.api import NotFound
-from urlparse import urlparse
-from urllib import urlencode
 import os
 import _util
 import pprint
 import json
+import logging
 import mimetypes
+
+from gsimporter.api import (RequestFailed,
+                            BadRequest,
+                            NotFound,
+                            parse_response)
+
+# import httplib2
+import urllib3
+
+from urlparse import urlparse
+from urllib import urlencode
 
 _logger = logging.getLogger(__name__)
 
@@ -119,21 +123,23 @@ class _Client(object):
         self.service_url = url
         if self.service_url.endswith("/"):
             self.service_url = self.service_url.strip("/")
-        self.http = httplib2.Http()
         self.username = username
         self.password = password
-        self.http.add_credentials(self.username, self.password)
-        netloc = urlparse(url).netloc
-        self.http.authorizations.append(
-            httplib2.BasicAuthentication(
-                (username, password),
-                netloc,
-                url,
-                {},
-                None,
-                None,
-                self.http
-            ))
+        self.http = urllib3.PoolManager(2, maxsize=4, block=True)
+        self.headers = urllib3.util.make_headers(basic_auth=':'.join([username,password]))
+        # self.http = httplib2.Http()
+        # self.http.add_credentials(self.username, self.password)
+        # netloc = urlparse(url).netloc
+        # self.http.authorizations.append(
+        #     httplib2.BasicAuthentication(
+        #         (username, password),
+        #         netloc,
+        #         url,
+        #         {},
+        #         None,
+        #         None,
+        #         self.http
+        #     ))
 
     def url(self,path):
         return "%s/%s" % (self.service_url,path)
@@ -165,7 +171,9 @@ class _Client(object):
                 data_len = -1
             log_data = data if data_len < 1024 else "[Data to long...]"
         _logger.info("%s request to %s:\n[Data]:%s", method, url, log_data)
-        resp, content = self.http.request(url, method, data, headers)
+        headers.update(self.headers)
+        resp = self.http.request(method, url, body=data, headers=headers, preload_content=False)
+        content = resp.read()
         _debug(resp, content)
         if resp.status == 404:
             raise NotFound()

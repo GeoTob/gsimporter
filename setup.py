@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 setup(name = "gn_gsimporter",
-    version = "1.0.3",
+    version = "1.0.5",
     description = "GeoNode GeoServer Importer Client",
     keywords = "GeoNode GeoServer Importer",
     license = "MIT",
@@ -12,6 +12,7 @@ setup(name = "gn_gsimporter",
     author_email = "ischneider@opengeo.org",
     install_requires = [
         'httplib2',
+        'urllib3'
     ],
     tests_require = [
         'gisdata>=0.5.4',
