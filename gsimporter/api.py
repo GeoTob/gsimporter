@@ -4,6 +4,8 @@ import json
 import os
 import pprint
 
+from urlparse import urlparse
+
 STATE_PENDING = "PENDING"
 STATE_READY = "READY"
 STATE_RUNNING = "RUNNING"
@@ -74,10 +76,9 @@ class _UploadBase(object):
     def reload(self):
         '''reset the state of this object if possible'''
         if not hasattr(self, 'href'):
-            # raise Exception('cannot reload %s', type(self))
-            self.href = self._client().url()
-
-        resp = self._client()._request(self.href + "?expand=3")
+            raise Exception('cannot reload %s', type(self))
+        _url = self._url(None)
+        resp = self._client()._request(_url + "?expand=3")
         # if we have a parent, keep it, otherwise, we're the new parent
         parsed = parse_response(resp, parent=self._parent or self)
         for binding in self._bindings:
@@ -118,8 +119,15 @@ class _UploadBase(object):
                 return comp._uploader
             comp = comp._parent
 
-    def _url(self,spec,*parts):
-        return self._getuploader().client.url( spec % parts )
+    def _url(self, spec, *parts):
+        if spec:
+            return self._getuploader().client.url(spec % parts)
+        elif hasattr(self, 'href'):
+            _href = urlparse(self.href)
+            _url = urlparse(self._getuploader().client.url())
+            return _href._replace(netloc=_url.netloc).geturl()
+        else:
+            return self._getuploader().client.url()
 
     def _client(self):
         return self._getuploader().client
@@ -209,7 +217,9 @@ class Target(_UploadBase):
         if workspace:
             dataStore['workspace'] = { 'name' : str(workspace) }
         target_rep = { self.store_type : dataStore }
-        self._client().put_json(self.href,json.dumps(target_rep))
+        print(" ********************************* HREF = %s" % self.href)
+        print(" ********************************* URL  = %s" % self._url(None))
+        self._client().put_json(self._url(None), json.dumps(target_rep))
 
 
 class BBox(_UploadBase):
@@ -233,7 +243,7 @@ class Layer(_UploadBase):
     _object_name = 'layer'
     _bindings = (
         _binding('name'),
-        # _binding('href'),
+        _binding('href'),
         _binding('originalName', expected=False),
         _binding('nativeName', expected=False),
         _binding('srs', expected=False),
@@ -243,14 +253,14 @@ class Layer(_UploadBase):
 
     def set_target_layer_name(self, name):
         data = { 'layer' : { 'name' : name }}
-        self._client().put_json(self.href, json.dumps(data))
+        self._client().put_json(self._url(None), json.dumps(data))
 
 
 class Task(_UploadBase):
     _object_name = 'task'
     _bindings = (
         _binding('id'),
-        # _binding('href'),
+        _binding('href'),
         _binding('state'),
         _binding('progress'),
         _binding('updateMode', expected=False), # workaround for older versions
@@ -282,14 +292,14 @@ class Task(_UploadBase):
                 raise Exception("store_type must be one of %s" % (Target._store_types,))
             self.target = Target(None, self)
             self.target.store_type = store_type
-            self.target.href = self.href + "/target"
+            self.target.href = self.url(None) + "/target"
         self.target.change_datastore(store_name, workspace)
 
     def set_update_mode(self,update_mode):
         data = { 'task' : {
             'updateMode' : update_mode
         }}
-        self._client().put_json(self.href,json.dumps(data))
+        self._client().put_json(self.url(None), json.dumps(data))
 
     def set_charset(self,charset):
         data = { 'task' : {
@@ -297,15 +307,15 @@ class Task(_UploadBase):
                 'charset' : charset
             }
         }}
-        self._client().put_json(self.href,json.dumps(data))
+        self._client().put_json(self.url(None), json.dumps(data))
 
     def set_srs(self, srs):
         data = { 'layer' : { 'srs' : srs }}
-        self._client().put_json(self.href, json.dumps(data))
+        self._client().put_json(self.url(None), json.dumps(data))
 
     def delete(self):
         """Delete the task"""
-        resp, content = self._client().delete(self.href)
+        resp, content = self._client().delete(self.url(None))
         if resp.status != 204:
             raise Exception('expected 204 response code, got %s' % resp.status,content)
 
@@ -320,7 +330,7 @@ class Task(_UploadBase):
             "transforms": self.transforms
         }
         data = { 'task' : { 'transformChain' : chain}}
-        self._client().put_json(self.href, json.dumps(data))
+        self._client().put_json(self.url(None), json.dumps(data))
 
     def add_transforms(self, transforms, save=True):
         self.transforms.extend(transforms)
@@ -360,14 +370,14 @@ class Task(_UploadBase):
 class Session(_UploadBase):
     _object_name = 'import'
     _bindings = (
-        _binding("id"),
-        _binding("href"),
-        _binding("state"),
-        _binding("data", binding=Data, expected=False),
-        _binding("archive", expected=False, ro=False),
-        _binding("tasks", expected=False, binding=Task),
-        _binding("targetWorkspace", expected=False, binding=Target),
-        _binding("targetStore", expected=False, binding=Target),
+        _binding('id'),
+        _binding('href'),
+        _binding('state'),
+        _binding('data', binding=Data, expected=False),
+        _binding('archive', expected=False, ro=False),
+        _binding('tasks', expected=False, binding=Task),
+        _binding('targetWorkspace', expected=False, binding=Target),
+        _binding('targetStore', expected=False, binding=Target),
     )
 
     def delete_unrecognized_tasks(self):
