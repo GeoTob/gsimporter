@@ -59,7 +59,6 @@ def _binding(name, expected=True, ro=True, binding=None):
     return _Binding(name, expected, ro, binding)
 
 
-
 class _UploadBase(object):
     _object_name = None
 
@@ -75,7 +74,9 @@ class _UploadBase(object):
     def reload(self):
         '''reset the state of this object if possible'''
         if not hasattr(self, 'href'):
-            raise Exception('cannot reload %s', type(self))
+            # raise Exception('cannot reload %s', type(self))
+            self.href = self._client().url()
+
         resp = self._client()._request(self.href + "?expand=3")
         # if we have a parent, keep it, otherwise, we're the new parent
         parsed = parse_response(resp, parent=self._parent or self)
@@ -232,7 +233,7 @@ class Layer(_UploadBase):
     _object_name = 'layer'
     _bindings = (
         _binding('name'),
-        _binding('href'),
+        # _binding('href'),
         _binding('originalName', expected=False),
         _binding('nativeName', expected=False),
         _binding('srs', expected=False),
@@ -249,7 +250,7 @@ class Task(_UploadBase):
     _object_name = 'task'
     _bindings = (
         _binding('id'),
-        _binding('href'),
+        # _binding('href'),
         _binding('state'),
         _binding('progress'),
         _binding('updateMode', expected=False), # workaround for older versions

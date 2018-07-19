@@ -141,8 +141,10 @@ class _Client(object):
         #         self.http
         #     ))
 
-    def url(self,path):
-        return "%s/%s" % (self.service_url,path)
+    def url(self, path=None):
+        if path:
+            return "%s/%s" % (self.service_url, path)
+        return self.service_url
 
     def post(self, url):
         return self._request(url, "POST")
