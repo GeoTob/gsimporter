@@ -217,8 +217,6 @@ class Target(_UploadBase):
         if workspace:
             dataStore['workspace'] = { 'name' : str(workspace) }
         target_rep = { self.store_type : dataStore }
-        print(" ********************************* HREF = %s" % self.href)
-        print(" ********************************* URL  = %s" % self._url(None))
         self._client().put_json(self._url(None), json.dumps(target_rep))
 
 
@@ -348,7 +346,10 @@ class Task(_UploadBase):
         """Get a json object representing progress of this item"""
         if self.progress:
             client = self._client()
-            headers, response = client._request(self.progress)
+            _progress = urlparse(self.progress)
+            _url = urlparse(self._getuploader().client.url())
+            _progress = _progress._replace(netloc=_url.netloc).geturl()
+            headers, response = client._request(_progress)
             unicode_error = False
             try:
                 response = response.decode('utf-8', 'strict')
