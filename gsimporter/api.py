@@ -290,14 +290,14 @@ class Task(_UploadBase):
                 raise Exception("store_type must be one of %s" % (Target._store_types,))
             self.target = Target(None, self)
             self.target.store_type = store_type
-            self.target.href = self.url(None) + "/target"
+            self.target.href = self._url(None) + "/target"
         self.target.change_datastore(store_name, workspace)
 
     def set_update_mode(self,update_mode):
         data = { 'task' : {
             'updateMode' : update_mode
         }}
-        self._client().put_json(self.url(None), json.dumps(data))
+        self._client().put_json(self._url(None), json.dumps(data))
 
     def set_charset(self,charset):
         data = { 'task' : {
@@ -305,15 +305,15 @@ class Task(_UploadBase):
                 'charset' : charset
             }
         }}
-        self._client().put_json(self.url(None), json.dumps(data))
+        self._client().put_json(self._url(None), json.dumps(data))
 
     def set_srs(self, srs):
         data = { 'layer' : { 'srs' : srs }}
-        self._client().put_json(self.url(None), json.dumps(data))
+        self._client().put_json(self._url(None), json.dumps(data))
 
     def delete(self):
         """Delete the task"""
-        resp, content = self._client().delete(self.url(None))
+        resp, content = self._client().delete(self._url(None))
         if resp.status != 204:
             raise Exception('expected 204 response code, got %s' % resp.status,content)
 
@@ -328,7 +328,7 @@ class Task(_UploadBase):
             "transforms": self.transforms
         }
         data = { 'task' : { 'transformChain' : chain}}
-        self._client().put_json(self.url(None), json.dumps(data))
+        self._client().put_json(self._url(None), json.dumps(data))
 
     def add_transforms(self, transforms, save=True):
         self.transforms.extend(transforms)
