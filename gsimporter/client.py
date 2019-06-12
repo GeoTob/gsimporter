@@ -176,7 +176,8 @@ class _Client(object):
         headers.update(self.headers)
         resp = self.http.request(method, url, body=data, headers=headers, preload_content=False)
         content = resp.read()
-        _debug(resp, content)
+        headers = resp.headers
+        _debug(headers, content)
         if resp.status == 404:
             raise NotFound()
         if resp.status < 200 or resp.status > 299:
