@@ -125,7 +125,7 @@ class _UploadBase(object):
         elif hasattr(self, 'href'):
             _href = urlparse(self.href)
             _url = urlparse(self._getuploader().client.url())
-            return _href._replace(netloc=_url.netloc).geturl()
+            return _href._replace(scheme=_url.scheme, netloc=_url.netloc).geturl()
         else:
             return self._getuploader().client.url()
 
@@ -348,7 +348,7 @@ class Task(_UploadBase):
             client = self._client()
             _progress = urlparse(self.progress)
             _url = urlparse(self._getuploader().client.url())
-            _progress = _progress._replace(netloc=_url.netloc).geturl()
+            _progress = _progress._replace(scheme=_url.scheme, netloc=_url.netloc).geturl()
             headers, response = client._request(_progress)
             unicode_error = False
             try:
