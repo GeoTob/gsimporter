@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 setup(name = "gn_gsimporter",
-    version = "1.0.9",
+    version = "1.0.10",
     description = "GeoNode GeoServer Importer Client",
     keywords = "GeoNode GeoServer Importer",
     license = "MIT",
@@ -16,7 +16,7 @@ setup(name = "gn_gsimporter",
     ],
     tests_require = [
         'gisdata>=0.5.4',
-        'gsconfig>=1.0.0',
+        'geoserver-restconfig>=1.0.1',
         'psycopg2',
         'OWSLib>=0.7.2',
         'unittest2',
