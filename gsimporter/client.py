@@ -121,30 +121,25 @@ class _Client(object):
 
     def __init__(self, url, username, password):
         self.service_url = url
+        self.service_scheme = urlparse(url).scheme
         if self.service_url.endswith("/"):
             self.service_url = self.service_url.strip("/")
         self.username = username
         self.password = password
-        self.http = urllib3.PoolManager(
-            2,
-            maxsize=4,
-            block=True,
-            cert_reqs='CERT_NONE',
-            assert_hostname=False)
+        if self.service_scheme == 'https':
+            self.http = urllib3.PoolManager(
+                2,
+                maxsize=4,
+                block=True,
+                cert_reqs='CERT_NONE',
+                assert_hostname=False)
+        else:
+            self.http = urllib3.PoolManager(
+                2,
+                maxsize=4,
+                block=True)
+
         self.headers = urllib3.util.make_headers(basic_auth=':'.join([username,password]))
-        # self.http = httplib2.Http()
-        # self.http.add_credentials(self.username, self.password)
-        # netloc = urlparse(url).netloc
-        # self.http.authorizations.append(
-        #     httplib2.BasicAuthentication(
-        #         (username, password),
-        #         netloc,
-        #         url,
-        #         {},
-        #         None,
-        #         None,
-        #         self.http
-        #     ))
 
     def url(self, path=None):
         if path:
