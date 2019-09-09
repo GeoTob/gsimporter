@@ -125,7 +125,12 @@ class _Client(object):
             self.service_url = self.service_url.strip("/")
         self.username = username
         self.password = password
-        self.http = urllib3.PoolManager(2, maxsize=4, block=True)
+        self.http = urllib3.PoolManager(
+            2,
+            maxsize=4,
+            block=True,
+            cert_reqs='CERT_NONE',
+            assert_hostname=False)
         self.headers = urllib3.util.make_headers(basic_auth=':'.join([username,password]))
         # self.http = httplib2.Http()
         # self.http.add_credentials(self.username, self.password)
