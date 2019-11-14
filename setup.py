@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 setup(name = "gn_gsimporter",
-    version = "1.0.13",
+    version = "1.0.14",
     description = "GeoNode GeoServer Importer Client",
     keywords = "GeoNode GeoServer Importer",
     license = "MIT",
