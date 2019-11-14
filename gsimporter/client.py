@@ -50,16 +50,17 @@ class Client(object):
         '''
         return self._call(self.client.get_import,id)
 
-    def start_import(self, import_id=None, mosaic=False, name=None, target_store=None, charsetEncoding="UTF-8"):
+    def start_import(self, import_id=None, mosaic=False, name=None, target_store=None, charset_encoding="UTF-8"):
         """Create a new import session.
         :param import_id: optional id to specify
         :param mosaic: if True, indicates a mosaic upload
         :param name: if provided, name the mosaic upload
         :param target_store: if provided, name of an existing store to be updated
+        :param charsetEncoding: if provided, the charsetEncoding to use (default UTF-8)
         :returns: a gsimporter.api.Session object
         """
         session = self._call(self.client.start_import, import_id,
-                             mosaic, name, target_store, charsetEncoding)
+                             mosaic, name, target_store, charset_encoding)
         if import_id: assert session.id >= import_id
         return session
 
@@ -82,7 +83,7 @@ class Client(object):
         return self.upload_files(files, use_url, import_id, mosaic, initial_opts)
 
     def upload_files(self, files, use_url=False, import_id=None, mosaic=False,
-                     name=None, intial_opts=None, target_store=None, charsetEncoding="UTF-8"):
+                     name=None, intial_opts=None, target_store=None, charset_encoding="UTF-8"):
         """Upload the provided files. If a mosaic, compute a name from the
         provided files.
         :param files: the files to upload
@@ -104,7 +105,7 @@ class Client(object):
             mosaic=mosaic,
             name=name,
             target_store=target_store,
-            charsetEncoding=charsetEncoding)
+            charset_encoding=charset_encoding)
         if files:
             session.upload_task(files, use_url, intial_opts)
 
@@ -214,7 +215,7 @@ class _Client(object):
     def get_imports(self):
         return parse_response(self._request(self.url("imports")))
 
-    def start_import(self, import_id=None, mosaic=False, name=None, target_store=False, charsetEncoding="UTF-8"):
+    def start_import(self, import_id=None, mosaic=False, name=None, target_store=False, charset_encoding="UTF-8"):
         method = 'POST'
         data = None
         headers = {}
@@ -227,20 +228,28 @@ class _Client(object):
                    "time": {
                         "mode": "auto"
                    },
-                   "charsetEncoding": charsetEncoding
+                   "charsetEncoding": charset_encoding
                 }
             }}
-        if target_store:
+        elif target_store:
             import_data = {"import": {
                 "data": {
                     "type": "file",
                     "file": name,
-                    "charsetEncoding": charsetEncoding
+                    "charsetEncoding": charset_encoding
                 },
                 "targetStore": {
                    "dataStore": {
                         "name": target_store
                    }
+                }
+            }}
+        else:
+            import_data = {"import": {
+                "data": {
+                    "type": "file",
+                    "file": name,
+                    "charsetEncoding": charset_encoding
                 }
             }}
         data = json.dumps(import_data)
@@ -252,7 +261,7 @@ class _Client(object):
             url = self.url("imports")
         return parse_response(self._request(url, method, data, headers))
 
-    def post_multipart(self,url,files,fields=[]):
+    def post_multipart(self, url, files, fields=[]):
         """
         fields is a sequence of (name, value) elements for regular form fields.
         files is a sequence of name or (name,filename) or (name, filename, value)
@@ -269,8 +278,12 @@ class _Client(object):
             L.append('')
             L.append(str(value))
         for fpair in files:
-            if isinstance(fpair,str):
-                fpair = (fpair,fpair)
+            try:
+                if isinstance(fpair, basestring):
+                    fpair = (fpair, fpair)
+            except BaseException:
+                if isinstance(fpair, str):
+                    fpair = (fpair, fpair)
             key = fpair[0]
             if len(fpair) == 2:
                 filename = os.path.basename(fpair[1])
