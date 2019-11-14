@@ -50,7 +50,7 @@ class Client(object):
         '''
         return self._call(self.client.get_import,id)
 
-    def start_import(self, import_id=None, mosaic=False, name=None, target_store=None):
+    def start_import(self, import_id=None, mosaic=False, name=None, target_store=None, charsetEncoding="UTF-8"):
         """Create a new import session.
         :param import_id: optional id to specify
         :param mosaic: if True, indicates a mosaic upload
@@ -58,7 +58,8 @@ class Client(object):
         :param target_store: if provided, name of an existing store to be updated
         :returns: a gsimporter.api.Session object
         """
-        session = self._call(self.client.start_import, import_id, mosaic, name, target_store)
+        session = self._call(self.client.start_import, import_id,
+                             mosaic, name, target_store, charsetEncoding)
         if import_id: assert session.id >= import_id
         return session
 
