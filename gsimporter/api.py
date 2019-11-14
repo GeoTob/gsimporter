@@ -163,6 +163,7 @@ class Data(_UploadBase):
         # either file or files...
         _binding('file', expected=False),
         _binding('files', expected=False),
+        _binding('charsetEncoding', expected=False),
         # location is used instead of file for remote uploads
         # e.g.:
         #   "data": {

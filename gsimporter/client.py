@@ -81,7 +81,7 @@ class Client(object):
         return self.upload_files(files, use_url, import_id, mosaic, initial_opts)
 
     def upload_files(self, files, use_url=False, import_id=None, mosaic=False,
-                     name=None, intial_opts=None, target_store=None):
+                     name=None, intial_opts=None, target_store=None, charsetEncoding="UTF-8"):
         """Upload the provided files. If a mosaic, compute a name from the
         provided files.
         :param files: the files to upload
@@ -98,7 +98,12 @@ class Client(object):
         if target_store and not name:
             name = os.path.basename(files[0])
 
-        session = self.start_import(import_id, mosaic=mosaic, name=name, target_store=target_store)
+        session = self.start_import(
+            import_id,
+            mosaic=mosaic,
+            name=name,
+            target_store=target_store,
+            charsetEncoding=charsetEncoding)
         if files:
             session.upload_task(files, use_url, intial_opts)
 
@@ -208,7 +213,7 @@ class _Client(object):
     def get_imports(self):
         return parse_response(self._request(self.url("imports")))
 
-    def start_import(self, import_id=None, mosaic=False, name=None, target_store=False):
+    def start_import(self, import_id=None, mosaic=False, name=None, target_store=False, charsetEncoding="UTF-8"):
         method = 'POST'
         data = None
         headers = {}
@@ -220,14 +225,16 @@ class _Client(object):
                    "name": name,
                    "time": {
                         "mode": "auto"
-                   }
+                   },
+                   "charsetEncoding": charsetEncoding
                 }
             }}
         if target_store:
             import_data = {"import": {
                 "data": {
                     "type": "file",
-                    "file": name
+                    "file": name,
+                    "charsetEncoding": charsetEncoding
                 },
                 "targetStore": {
                    "dataStore": {
@@ -261,7 +268,7 @@ class _Client(object):
             L.append('')
             L.append(str(value))
         for fpair in files:
-            if isinstance(fpair,basestring):
+            if isinstance(fpair,str):
                 fpair = (fpair,fpair)
             key = fpair[0]
             if len(fpair) == 2:
