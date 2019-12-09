@@ -4,10 +4,9 @@ from gsimporter.api import parse_response
 from gsimporter.api import RequestFailed
 from gsimporter.api import BadRequest
 from gsimporter.api import NotFound
-from urlparse import urlparse
-from urllib import urlencode
+from urllib.parse import urlparse, urlencode
 import os
-import _util
+from . import _util
 import pprint
 import json
 import mimetypes
@@ -249,7 +248,7 @@ class _Client(object):
             L.append('')
             L.append(str(value))
         for fpair in files:
-            if isinstance(fpair,basestring):
+            if isinstance(fpair,str):
                 fpair = (fpair,fpair)
             key = fpair[0]
             if len(fpair) == 2:
